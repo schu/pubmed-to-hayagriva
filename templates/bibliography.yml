@@ -1,0 +1,21 @@
+{{ uid }}:
+    type: article
+    author:
+        {%- for a in authors %}
+        - "{{ a }}"
+        {%- endfor %}
+    title:
+        value: "{{ title }}"
+        verbatim: true
+    date: {{ pubdate }}
+    serial-number:
+        doi: "{{ doi }}"
+    {%- match fulljournalname  %}
+    {%  when Some with (fulljournalname)  %}
+    parent:
+        type: periodical
+        title:
+            value: "{{ fulljournalname }}"
+            verbatim: true
+    {% when None  %}
+    {%- endmatch %}
