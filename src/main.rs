@@ -54,34 +54,41 @@ fn fetch_data(url: &str) -> Result<serde_json::Value> {
 #[derive(Template)]
 #[template(path = "bibliography.yml")]
 struct BibliographyTemplate<'a> {
-    uid: &'a str,
-    title: &'a str,
     authors: &'a Vec<&'a str>,
-    pubdate: &'a str,
     doi: &'a str,
     fulljournalname: Option<&'a str>,
+    pubdate: &'a str,
+    title: &'a str,
+    uid: &'a str,
 }
 
 fn gen_yml(data: &serde_json::Value) -> Result<String> {
-    let pubdate = extract_pubdate(data)?;
+    let authors = extract_authors(data)?;
     let doi = extract_doi(data)?;
+    let pubdate = extract_pubdate(data)?;
 
     let template = BibliographyTemplate {
-        uid: data["uid"].as_str().ok_or(anyhow!("no UID found"))?,
-        title: data["title"].as_str().ok_or(anyhow!("no title found"))?,
-        authors: &data["authors"]
-            .as_array()
-            .ok_or(anyhow!("no authors found"))?
-            .iter()
-            .map(|a| a["name"].as_str().unwrap())
-            .collect(),
-        pubdate: pubdate.as_str(),
+        authors: &authors,
         doi: doi.as_str(),
         fulljournalname: data["fulljournalname"].as_str(),
+        pubdate: pubdate.as_str(),
+        title: data["title"].as_str().ok_or(anyhow!("no title found"))?,
+        uid: data["uid"].as_str().ok_or(anyhow!("no UID found"))?,
     };
 
     let rendered = template.render()?;
     Ok(rendered)
+}
+
+fn extract_authors(data: &serde_json::Value) -> Result<Vec<&str>> {
+    let authors = data["authors"]
+        .as_array()
+        .ok_or(anyhow!("no authors found"))?
+        .iter()
+        .map(|a| a["name"].as_str().unwrap())
+        .collect();
+
+    Ok(authors)
 }
 
 fn extract_pubdate(data: &serde_json::Value) -> Result<String> {
