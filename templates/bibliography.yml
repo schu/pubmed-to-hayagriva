@@ -10,6 +10,7 @@
     date: {{ pubdate }}
     serial-number:
         doi: "{{ doi }}"
+        pmid: "{{ pmid }}"
     {%- match fulljournalname  %}
     {%  when Some with (fulljournalname)  %}
     parent:

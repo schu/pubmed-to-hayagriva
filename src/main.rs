@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::env;
 use std::process::exit;
 
@@ -56,6 +57,7 @@ fn fetch_data(url: &str) -> Result<serde_json::Value> {
 struct BibliographyTemplate<'a> {
     authors: &'a Vec<&'a str>,
     doi: &'a str,
+    pmid: &'a str,
     fulljournalname: Option<&'a str>,
     pubdate: &'a str,
     title: &'a str,
@@ -64,12 +66,13 @@ struct BibliographyTemplate<'a> {
 
 fn gen_yml(data: &serde_json::Value) -> Result<String> {
     let authors = extract_authors(data)?;
-    let doi = extract_doi(data)?;
+    let ids = extract_ids(data)?;
     let pubdate = extract_pubdate(data)?;
 
     let template = BibliographyTemplate {
         authors: &authors,
-        doi: doi.as_str(),
+        doi: ids["doi"],
+        pmid: ids["pubmed"],
         fulljournalname: data["fulljournalname"].as_str(),
         pubdate: pubdate.as_str(),
         title: data["title"].as_str().ok_or(anyhow!("no title found"))?,
@@ -107,15 +110,18 @@ fn extract_pubdate(data: &serde_json::Value) -> Result<String> {
     Ok(pubdate_iso8861.to_string())
 }
 
-fn extract_doi(data: &serde_json::Value) -> Result<String> {
-    let doi = data["articleids"]
+fn extract_ids(data: &serde_json::Value) -> Result<HashMap<&str, &str>> {
+    let ids = data["articleids"]
         .as_array()
         .ok_or(anyhow!("no articleids found"))?
         .iter()
-        .find(|a| a["idtype"].as_str().unwrap() == "doi")
-        .ok_or(anyhow!("no doi found"))?["value"]
-        .as_str()
-        .unwrap();
+        .map(|value| {
+            return (
+                value["idtype"].as_str().unwrap(),
+                value["value"].as_str().unwrap(),
+            );
+        })
+        .collect();
 
-    Ok(doi.to_string())
+    Ok(ids)
 }
