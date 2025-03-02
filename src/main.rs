@@ -116,10 +116,10 @@ fn extract_ids(data: &serde_json::Value) -> Result<HashMap<&str, &str>> {
         .ok_or(anyhow!("no articleids found"))?
         .iter()
         .map(|value| {
-            return (
+            (
                 value["idtype"].as_str().unwrap(),
                 value["value"].as_str().unwrap(),
-            );
+            )
         })
         .collect();
 
